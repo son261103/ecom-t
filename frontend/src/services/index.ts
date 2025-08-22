@@ -6,6 +6,7 @@ export { categoryService } from './categoryService';
 export { brandService } from './brandService';
 export { cartService } from './cartService';
 export { orderService } from './orderService';
+export { uploadService } from './uploadService';
 
 // Export service classes for advanced usage
 export { AuthService } from './authService';
@@ -14,3 +15,4 @@ export { CategoryService } from './categoryService';
 export { BrandService } from './brandService';
 export { CartService } from './cartService';
 export { OrderService } from './orderService';
+export { UploadService } from './uploadService';

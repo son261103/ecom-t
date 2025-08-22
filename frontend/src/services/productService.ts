@@ -72,11 +72,54 @@ export class ProductService {
   }
 
   async createProduct(productData: ProductRequest): Promise<ProductResponse> {
-    return apiClient.post<ProductResponse>('/admin/products', productData);
+    return apiClient.post<ProductResponse>('/admin/products/json', productData);
   }
 
   async updateProduct(id: number, productData: ProductRequest): Promise<ProductResponse> {
-    return apiClient.put<ProductResponse>(`/admin/products/${id}`, productData);
+    return apiClient.put<ProductResponse>(`/admin/products/json/${id}`, productData);
+  }
+
+  /**
+   * Create product with image upload (multipart form data)
+   * @param productData Product data
+   * @param imageFile Optional image file
+   * @returns Created product
+   */
+  async createProductWithImage(productData: ProductRequest, imageFile?: File): Promise<ProductResponse> {
+    const formData = new FormData();
+    formData.append('productData', JSON.stringify(productData));
+    
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    return apiClient.post<ProductResponse>('/admin/products', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  /**
+   * Update product with image upload (multipart form data)
+   * @param id Product ID
+   * @param productData Product data
+   * @param imageFile Optional image file
+   * @returns Updated product
+   */
+  async updateProductWithImage(id: number, productData: ProductRequest, imageFile?: File): Promise<ProductResponse> {
+    const formData = new FormData();
+    formData.append('productData', JSON.stringify(productData));
+    
+    if (imageFile) {
+      formData.append('image', imageFile);
+    }
+
+    return apiClient.put<ProductResponse>(`/admin/products/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   }
 
   async deleteProduct(id: number): Promise<ApiResponse> {

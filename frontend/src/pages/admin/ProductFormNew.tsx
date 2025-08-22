@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { Save, ArrowLeft, Upload, X, Trash2 } from "lucide-react";
-import { Card, Button, Input, Loading } from "../../components/ui";
-import { useAsync, useImageUpload } from "../../hooks";
+import { Save, ArrowLeft } from "lucide-react";
+import { Card, Button, Input, Loading, ImageUpload } from "../../components/ui";
+import { useAsync } from "../../hooks";
 import { productService, categoryService, brandService } from "../../services";
 import type { ProductRequest, Category, Brand } from "../../types";
 import { toast } from "react-hot-toast";
@@ -47,16 +47,15 @@ const schema = yup.object({
   categoryId: yup.number().required("Danh mục là bắt buộc"),
   brandId: yup.number().required("Thương hiệu là bắt buộc"),
   isActive: yup.boolean().required(),
+  image: yup.string().optional(),
+  cloudinaryPublicId: yup.string().optional(),
 });
 
-const ProductForm: React.FC = () => {
+const ProductFormNew: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEdit = !!id;
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Image upload hook
-  const imageUpload = useImageUpload(10, false, "products");
 
   // Fetch categories and brands
   const { data: categories } = useAsync<Category[]>(
@@ -82,6 +81,8 @@ const ProductForm: React.FC = () => {
     register,
     handleSubmit,
     reset,
+    control,
+    setValue,
     formState: { errors },
   } = useForm<ProductRequest>({
     resolver: yupResolver(schema) as any,
@@ -103,72 +104,37 @@ const ProductForm: React.FC = () => {
         categoryId: product.category.id,
         brandId: product.brand.id,
         isActive: product.isActive,
+        image: product.image,
+        cloudinaryPublicId: product.cloudinaryPublicId,
       });
-
-      // Set existing image if available
-      if (product.image) {
-        imageUpload.setPreviewFromUrl(
-          product.image,
-          product.cloudinaryPublicId
-        );
-      }
     }
-  }, [product, isEdit, reset, imageUpload]);
+  }, [product, isEdit, reset]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      imageUpload.handleFileSelect(file);
-    }
-  };
-
-  const removeImage = () => {
-    imageUpload.resetState();
+  const handleImageChange = (
+    imageUrl?: string,
+    cloudinaryPublicId?: string
+  ) => {
+    setValue("image", imageUrl);
+    setValue("cloudinaryPublicId", cloudinaryPublicId);
   };
 
   const onSubmit = async (data: ProductRequest) => {
     setIsSubmitting(true);
     try {
-      let uploadedImageData = null;
-
-      // Upload image if there's a new image file selected but not yet uploaded
-      if (imageUpload.state.previewUrl && !imageUpload.state.uploadedImage) {
-        uploadedImageData = await imageUpload.handleUpload("products");
-        if (!uploadedImageData) {
-          throw new Error("Failed to upload image");
-        }
-      }
-
-      const productData: ProductRequest = {
-        ...data,
-        image:
-          uploadedImageData?.url ||
-          imageUpload.state.uploadedImage?.url ||
-          product?.image ||
-          undefined,
-        cloudinaryPublicId:
-          uploadedImageData?.publicId ||
-          imageUpload.state.uploadedImage?.publicId ||
-          product?.cloudinaryPublicId ||
-          undefined,
-      };
-
       if (isEdit) {
-        await productService.updateProduct(Number(id), productData);
+        await productService.updateProduct(Number(id), data);
         toast.success("Cập nhật sản phẩm thành công!");
       } else {
-        await productService.createProduct(productData);
+        await productService.createProduct(data);
         toast.success("Tạo sản phẩm thành công!");
       }
 
       navigate("/admin/products");
     } catch (error: any) {
       console.error("Error saving product:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Có lỗi xảy ra khi lưu sản phẩm";
-      toast.error(errorMessage);
+      toast.error(
+        error.response?.data?.message || "Có lỗi xảy ra khi lưu sản phẩm"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -329,80 +295,20 @@ const ProductForm: React.FC = () => {
                     Hình ảnh sản phẩm
                   </h2>
 
-                  <div className="space-y-4">
-                    {imageUpload.state.previewUrl ? (
-                      <div className="relative">
-                        <img
-                          src={imageUpload.state.previewUrl}
-                          alt="Product preview"
-                          className="w-full h-64 object-cover rounded-lg"
-                        />
-                        <div className="absolute top-2 right-2 flex space-x-2">
-                          {imageUpload.state.uploadedImage && (
-                            <button
-                              type="button"
-                              onClick={imageUpload.handleDelete}
-                              className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-200"
-                              title="Xóa ảnh khỏi Cloudinary"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={removeImage}
-                            className="p-2 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors duration-200"
-                            title="Bỏ chọn ảnh"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                        {imageUpload.state.isUploading && (
-                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
-                            <Loading size="md" text="Đang upload..." />
-                          </div>
-                        )}
-                        {imageUpload.state.uploadedImage && (
-                          <div className="absolute bottom-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                            ✓ Đã upload
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="border-2 border-dashed border-secondary-300 rounded-lg p-8 text-center">
-                        <Upload className="w-12 h-12 text-secondary-400 mx-auto mb-4" />
-                        <p className="text-secondary-600 mb-2">
-                          Kéo thả ảnh vào đây hoặc click để chọn
-                        </p>
-                        <p className="text-sm text-secondary-500">
-                          PNG, JPG, GIF tối đa 10MB
-                        </p>
-                      </div>
+                  <Controller
+                    name="image"
+                    control={control}
+                    render={({ field }) => (
+                      <ImageUpload
+                        value={field.value}
+                        cloudinaryPublicId={product?.cloudinaryPublicId}
+                        onChange={handleImageChange}
+                        folder="products"
+                        maxSizeInMB={10}
+                        error={errors.image?.message}
+                      />
                     )}
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-
-                    {imageUpload.state.error && (
-                      <p className="text-red-600 text-sm">
-                        {imageUpload.state.error}
-                      </p>
-                    )}
-
-                    {imageUpload.state.previewUrl &&
-                      !imageUpload.state.uploadedImage && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                          <p className="text-yellow-800 text-sm">
-                            ⚠️ Ảnh chưa được upload. Ảnh sẽ được upload tự động
-                            khi lưu sản phẩm.
-                          </p>
-                        </div>
-                      )}
-                  </div>
+                  />
                 </div>
               </Card>
             </div>
@@ -487,6 +393,16 @@ const ProductForm: React.FC = () => {
                           )}
                         </span>
                       </div>
+                      {product.cloudinaryPublicId && (
+                        <div className="flex justify-between">
+                          <span className="text-secondary-600">
+                            Cloudinary ID:
+                          </span>
+                          <span className="font-medium text-xs break-all">
+                            {product.cloudinaryPublicId}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </Card>
@@ -499,4 +415,4 @@ const ProductForm: React.FC = () => {
   );
 };
 
-export default ProductForm;
+export default ProductFormNew;

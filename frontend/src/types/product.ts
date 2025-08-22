@@ -37,6 +37,7 @@ export interface ProductResponse {
   discountPrice?: number;
   description?: string;
   image?: string;
+  cloudinaryPublicId?: string;
   stockQuantity: number;
   isActive: boolean;
   category: CategoryInfo;

@@ -22,91 +22,91 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class ProductService {
-    
+
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
-    
+
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public List<ProductResponse> getAllActiveProducts() {
         return productRepository.findByIsActiveTrue().stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public ProductResponse getProductById(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         return convertToResponse(product);
     }
-    
+
     public ProductResponse getActiveProductById(Long id) {
         Product product = productRepository.findByIdAndIsActiveTrue(id)
                 .orElseThrow(() -> new RuntimeException("Active product not found with id: " + id));
         return convertToResponse(product);
     }
-    
+
     public List<ProductResponse> getProductsByCategory(Long categoryId) {
         return productRepository.findByCategoryIdAndIsActiveTrue(categoryId).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public List<ProductResponse> getProductsByBrand(Long brandId) {
         return productRepository.findByBrandIdAndIsActiveTrue(brandId).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public List<ProductResponse> searchProducts(String name) {
         return productRepository.findByNameContainingIgnoreCaseAndIsActiveTrue(name).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-    
-    public List<ProductResponse> getProductsWithFilters(Long categoryId, Long brandId, 
-                                                       BigDecimal minPrice, BigDecimal maxPrice, String name) {
+
+    public List<ProductResponse> getProductsWithFilters(Long categoryId, Long brandId,
+            BigDecimal minPrice, BigDecimal maxPrice, String name) {
         return productRepository.findProductsWithFilters(categoryId, brandId, minPrice, maxPrice, name).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
-    
+
     public ProductResponse createProduct(ProductRequest request) {
         if (productRepository.existsByName(request.getName())) {
             throw new RuntimeException("Product name already exists: " + request.getName());
         }
-        
+
         Product product = new Product();
         mapRequestToEntity(request, product);
-        
+
         Product savedProduct = productRepository.save(product);
         return convertToResponse(savedProduct);
     }
-    
+
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
-        
+
         if (!product.getName().equals(request.getName()) && productRepository.existsByName(request.getName())) {
             throw new RuntimeException("Product name already exists: " + request.getName());
         }
-        
+
         mapRequestToEntity(request, product);
         Product savedProduct = productRepository.save(product);
         return convertToResponse(savedProduct);
     }
-    
+
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
         productRepository.delete(product);
     }
-    
+
     private void mapRequestToEntity(ProductRequest request, Product product) {
         product.setName(request.getName());
         product.setPrice(request.getPrice());
@@ -116,7 +116,7 @@ public class ProductService {
         product.setCloudinaryPublicId(request.getCloudinaryPublicId());
         product.setStockQuantity(request.getStockQuantity());
         product.setIsActive(request.getIsActive());
-        
+
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found with id: " + request.getCategoryId()));
@@ -124,7 +124,7 @@ public class ProductService {
         } else {
             product.setCategory(null);
         }
-        
+
         if (request.getBrandId() != null) {
             Brand brand = brandRepository.findById(request.getBrandId())
                     .orElseThrow(() -> new RuntimeException("Brand not found with id: " + request.getBrandId()));
@@ -133,7 +133,7 @@ public class ProductService {
             product.setBrand(null);
         }
     }
-    
+
     private ProductResponse convertToResponse(Product product) {
         ProductResponse response = new ProductResponse();
         response.setId(product.getId());
@@ -142,35 +142,34 @@ public class ProductService {
         response.setDiscountPrice(product.getDiscountPrice());
         response.setDescription(product.getDescription());
         response.setImage(product.getImage());
+        response.setCloudinaryPublicId(product.getCloudinaryPublicId());
         response.setStockQuantity(product.getStockQuantity());
         response.setIsActive(product.getIsActive());
         response.setCreatedAt(product.getCreatedAt());
         response.setUpdatedAt(product.getUpdatedAt());
-        
+
         if (product.getCategory() != null) {
             response.setCategory(new ProductResponse.CategoryInfo(
-                    product.getCategory().getId(), 
-                    product.getCategory().getName()
-            ));
+                    product.getCategory().getId(),
+                    product.getCategory().getName()));
         }
-        
+
         if (product.getBrand() != null) {
             response.setBrand(new ProductResponse.BrandInfo(
-                    product.getBrand().getId(), 
-                    product.getBrand().getName()
-            ));
+                    product.getBrand().getId(),
+                    product.getBrand().getName()));
         }
-        
+
         if (product.getVariants() != null) {
             List<ProductVariantResponse> variantResponses = product.getVariants().stream()
                     .map(this::convertVariantToResponse)
                     .collect(Collectors.toList());
             response.setVariants(variantResponses);
         }
-        
+
         return response;
     }
-    
+
     private ProductVariantResponse convertVariantToResponse(ProductVariant variant) {
         ProductVariantResponse response = new ProductVariantResponse();
         response.setId(variant.getId());
