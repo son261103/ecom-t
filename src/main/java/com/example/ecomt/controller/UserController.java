@@ -39,7 +39,7 @@ public class UserController {
                     user.getId(),
                     user.getName(),
                     user.getEmail(),
-                    "ROLE_" + user.getRole().name().toUpperCase(),
+                    user.getRole().name().toLowerCase(),
                     user.getCreatedAt(),
                     user.getUpdatedAt());
 

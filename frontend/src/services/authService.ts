@@ -80,10 +80,16 @@ export class AuthService {
     return !!(token && userData);
   }
 
-  // Check if user has specific role
+    // Check if user has specific role
   hasRole(role: string): boolean {
     const userData = this.getUserData();
-    return userData?.role === role;
+    if (!userData?.role) return false;
+    
+    // So sánh role đơn giản (cả hai đều uppercase)
+    const userRole = userData.role.toUpperCase();
+    const checkRole = role.toUpperCase();
+    
+    return userRole === checkRole;
   }
 
   // Check if user is admin

@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
-import { toast } from 'react-hot-toast';
-import { authService } from '../services';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import { toast } from "react-hot-toast";
+import { authService } from "../services";
 import type {
   AuthContextType,
   User,
@@ -9,7 +9,7 @@ import type {
   RegisterRequest,
   UpdateProfileRequest,
   ChangePasswordRequest,
-} from '../types';
+} from "../types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -32,15 +32,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (storedToken && storedUser) {
           setToken(storedToken);
           setUser(storedUser);
-          
+
           // Verify token is still valid by fetching user profile
           try {
             const profile = await authService.getUserProfile();
+            // Backend trả về role lowercase (admin, user)
+            const normalizedRole = profile.role.toUpperCase() as
+              | "USER"
+              | "ADMIN";
             const updatedUser: User = {
               id: profile.id,
               name: profile.name,
               email: profile.email,
-              role: profile.role as 'USER' | 'ADMIN',
+              role: normalizedRole,
               createdAt: profile.createdAt,
               updatedAt: profile.updatedAt,
             };
@@ -48,12 +52,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             authService.setUserData(updatedUser);
           } catch (error) {
             // Token is invalid or user profile not accessible, clear auth state
-            console.log('Token validation failed, clearing auth state:', error);
+            console.log("Token validation failed, clearing auth state:", error);
             handleLogout();
           }
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        console.error("Auth initialization error:", error);
         handleLogout();
       } finally {
         setIsLoading(false);
@@ -68,11 +72,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       const response = await authService.login(credentials);
 
+      // Backend trả về role lowercase (admin, user)
+      const normalizedRole = response.role.toUpperCase() as "USER" | "ADMIN";
+
       const userData: User = {
         id: response.id,
         name: response.name,
         email: response.email,
-        role: response.role as 'USER' | 'ADMIN',
+        role: normalizedRole,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -87,13 +94,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       toast.success(`Welcome back, ${response.name}!`);
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
 
       // Show specific error message if available
       if (error.response?.data?.message) {
         toast.error(error.response.data.message);
       } else {
-        toast.error('Login failed. Please check your credentials.');
+        toast.error("Login failed. Please check your credentials.");
       }
 
       throw error;
@@ -107,11 +114,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       const response = await authService.register(userData);
 
+      // Backend trả về role lowercase (admin, user)
+      const normalizedRole = response.role.toUpperCase() as "USER" | "ADMIN";
+
       const user: User = {
         id: response.id,
         name: response.name,
         email: response.email,
-        role: response.role as 'USER' | 'ADMIN',
+        role: normalizedRole,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -125,11 +135,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user);
 
       // Wait a bit to ensure state is updated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
-      toast.success(`Welcome, ${response.name}! Your account has been created.`);
+      toast.success(
+        `Welcome, ${response.name}! Your account has been created.`
+      );
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -138,14 +150,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = (): void => {
     handleLogout();
-    toast.success('You have been logged out successfully.');
+    toast.success("You have been logged out successfully.");
   };
 
   const handleLogout = (): void => {
     // Clear auth data
     authService.removeAuthToken();
     authService.removeUserData();
-    
+
     // Update state
     setToken(null);
     setUser(null);
@@ -158,11 +170,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       // Refresh user profile
       const profile = await authService.getUserProfile();
+      // Backend trả về role lowercase (admin, user)
+      const normalizedRole = profile.role.toUpperCase() as "USER" | "ADMIN";
       const updatedUser: User = {
         id: profile.id,
         name: profile.name,
         email: profile.email,
-        role: profile.role as 'USER' | 'ADMIN',
+        role: normalizedRole,
         createdAt: profile.createdAt,
         updatedAt: profile.updatedAt,
       };
@@ -170,9 +184,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(updatedUser);
       authService.setUserData(updatedUser);
 
-      toast.success('Profile updated successfully!');
+      toast.success("Profile updated successfully!");
     } catch (error: any) {
-      console.error('Profile update error:', error);
+      console.error("Profile update error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -183,9 +197,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       await authService.changePassword(data);
-      toast.success('Đổi mật khẩu thành công!');
+      toast.success("Đổi mật khẩu thành công!");
     } catch (error: any) {
-      console.error('Change password error:', error);
+      console.error("Change password error:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -207,16 +221,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 };
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

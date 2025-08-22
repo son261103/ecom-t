@@ -35,10 +35,11 @@ public class AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
+            String roleName = user.getRole().name().toLowerCase();
             String roleWithPrefix = "ROLE_" + user.getRole().name().toUpperCase();
             String token = jwtUtil.generateTokenWithRole(user.getEmail(), roleWithPrefix);
 
-            return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), roleWithPrefix);
+            return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), roleName);
         } catch (Exception e) {
             throw new RuntimeException("Login failed: " + e.getMessage());
         }
@@ -67,10 +68,11 @@ public class AuthService {
             }
 
             // Tạo JWT token với role định dạng ROLE_xxx
+            String roleName = user.getRole().name().toLowerCase();
             String roleWithPrefix = "ROLE_" + user.getRole().name().toUpperCase();
             String token = jwtUtil.generateTokenWithRole(user.getEmail(), roleWithPrefix);
 
-            return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), roleWithPrefix);
+            return new AuthResponse(token, user.getId(), user.getName(), user.getEmail(), roleName);
         } catch (RuntimeException e) {
             System.err.println("Registration error: " + e.getMessage());
             throw e;

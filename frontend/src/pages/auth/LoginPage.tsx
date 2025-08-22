@@ -1,25 +1,23 @@
-import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { Mail, Lock, Eye, EyeOff, Facebook } from 'lucide-react';
-import { Button, Input, Card } from '../../components/ui';
-import { useAuth } from '../../contexts';
-import type { LoginRequest } from '../../types';
-import { ROUTES } from '../../utils/constants';
-import { toast } from 'react-hot-toast';
+import React, { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { Mail, Lock, Eye, EyeOff, Facebook } from "lucide-react";
+import { Button, Input, Card } from "../../components/ui";
+import { useAuth } from "../../contexts";
+import { authService } from "../../services";
+import type { LoginRequest } from "../../types";
+import { ROUTES } from "../../utils/constants";
+import { toast } from "react-hot-toast";
 
 const schema = yup.object({
-  email: yup
-    .string()
-    .email('Email không hợp lệ')
-    .required('Email là bắt buộc'),
+  email: yup.string().email("Email không hợp lệ").required("Email là bắt buộc"),
   password: yup
     .string()
-    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
-    .required('Mật khẩu là bắt buộc'),
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+    .required("Mật khẩu là bắt buộc"),
 });
 
 const LoginPage: React.FC = () => {
@@ -41,9 +39,19 @@ const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginRequest) => {
     try {
       await login(data);
-      navigate(from, { replace: true });
+
+      // Get user data after login to check role
+      const userData = authService.getUserData();
+
+      // If user is admin, redirect to admin dashboard
+      if (userData && userData.role === "ADMIN") {
+        navigate(ROUTES.ADMIN_DASHBOARD, { replace: true });
+      } else {
+        // For regular users, use the original redirect logic
+        navigate(from, { replace: true });
+      }
     } catch (error: any) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       // Error is already handled by the auth service
     }
   };
@@ -57,7 +65,10 @@ const LoginPage: React.FC = () => {
         className="max-w-md w-full"
       >
         <div className="text-center mb-8">
-          <Link to={ROUTES.HOME} className="inline-flex items-center space-x-2 mb-6">
+          <Link
+            to={ROUTES.HOME}
+            className="inline-flex items-center space-x-2 mb-6"
+          >
             <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-xl">E</span>
             </div>
@@ -68,15 +79,13 @@ const LoginPage: React.FC = () => {
           <h2 className="text-3xl font-display font-bold text-secondary-900">
             Đăng nhập
           </h2>
-          <p className="mt-2 text-secondary-600">
-            Chào mừng bạn quay trở lại
-          </p>
+          <p className="mt-2 text-secondary-600">Chào mừng bạn quay trở lại</p>
         </div>
 
         <Card>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <Input
-              {...register('email')}
+              {...register("email")}
               type="email"
               label="Email"
               placeholder="Nhập email của bạn"
@@ -87,8 +96,8 @@ const LoginPage: React.FC = () => {
 
             <div className="relative">
               <Input
-                {...register('password')}
-                type={showPassword ? 'text' : 'password'}
+                {...register("password")}
+                type={showPassword ? "text" : "password"}
                 label="Mật khẩu"
                 placeholder="Nhập mật khẩu"
                 icon={<Lock className="w-4 h-4" />}
@@ -126,12 +135,7 @@ const LoginPage: React.FC = () => {
               </Link>
             </div>
 
-            <Button
-              type="submit"
-              loading={isLoading}
-              fullWidth
-              size="lg"
-            >
+            <Button type="submit" loading={isLoading} fullWidth size="lg">
               Đăng nhập
             </Button>
 
@@ -140,9 +144,7 @@ const LoginPage: React.FC = () => {
                 <div className="w-full border-t border-secondary-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-secondary-500">
-                  Hoặc
-                </span>
+                <span className="px-2 bg-white text-secondary-500">Hoặc</span>
               </div>
             </div>
 
@@ -150,7 +152,7 @@ const LoginPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => toast('Tính năng đang phát triển')}
+                onClick={() => toast("Tính năng đang phát triển")}
               >
                 <img
                   src="https://developers.google.com/identity/images/g-logo.png"
@@ -162,7 +164,7 @@ const LoginPage: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => toast('Tính năng đang phát triển')}
+                onClick={() => toast("Tính năng đang phát triển")}
               >
                 <Facebook className="w-4 h-4 mr-2 text-blue-600" />
                 Facebook
@@ -173,7 +175,7 @@ const LoginPage: React.FC = () => {
 
         <div className="text-center mt-6">
           <p className="text-secondary-600">
-            Chưa có tài khoản?{' '}
+            Chưa có tài khoản?{" "}
             <Link
               to={ROUTES.REGISTER}
               className="text-primary-600 hover:text-primary-700 font-medium"
