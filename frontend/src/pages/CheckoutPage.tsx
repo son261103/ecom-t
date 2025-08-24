@@ -42,7 +42,7 @@ const schema = yup.object({
     .required('Phường/Xã là bắt buộc'),
   paymentMethod: yup
     .string()
-    .oneOf(['COD', 'VNPAY', 'SEPAY'], 'Phương thức thanh toán không hợp lệ')
+    .oneOf(['COD'], 'Phương thức thanh toán không hợp lệ')
     .required('Phương thức thanh toán là bắt buộc'),
   notes: yup.string().optional(),
 });
@@ -147,18 +147,7 @@ const CheckoutPage: React.FC = () => {
       description: 'Thanh toán bằng tiền mặt khi nhận hàng',
       icon: <ShoppingCart className="w-5 h-5" />,
     },
-    {
-      value: 'VNPAY' as PaymentMethod,
-      label: 'VNPay',
-      description: 'Thanh toán qua ví điện tử VNPay',
-      icon: <CreditCard className="w-5 h-5" />,
-    },
-    {
-      value: 'SEPAY' as PaymentMethod,
-      label: 'SePay',
-      description: 'Thanh toán qua ví điện tử SePay',
-      icon: <CreditCard className="w-5 h-5" />,
-    },
+
   ];
 
   return (

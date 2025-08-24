@@ -1,5 +1,10 @@
 package com.example.ecomt.entity;
 
+import com.example.ecomt.converter.OrderStatusConverter;
+import com.example.ecomt.converter.PaymentMethodConverter;
+import com.example.ecomt.converter.PaymentStatusConverter;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import jakarta.persistence.Convert;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,8 +34,8 @@ public class Order {
     @Column(name = "total_price", precision = 10, scale = 2)
     private BigDecimal totalPrice;
     
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Convert(converter = OrderStatusConverter.class)
     private OrderStatus status = OrderStatus.PENDING;
     
     @Column(name = "shipping_address", columnDefinition = "TEXT")
@@ -51,12 +56,12 @@ public class Order {
     @Column(name = "shipping_fee", precision = 10, scale = 2)
     private BigDecimal shippingFee = BigDecimal.ZERO;
     
-    @Enumerated(EnumType.STRING)
     @Column(name = "payment_method")
+    @Convert(converter = PaymentMethodConverter.class)
     private PaymentMethod paymentMethod = PaymentMethod.COD;
     
-    @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")
+    @Convert(converter = PaymentStatusConverter.class)
     private PaymentStatus paymentStatus = PaymentStatus.PENDING;
     
     @Column(name = "transaction_id", length = 255)
@@ -90,10 +95,10 @@ public class Order {
     }
     
     public enum PaymentMethod {
-        VNPAY, SEPAY, COD
+        COD
     }
     
-    public enum PaymentStatus {
+        public enum PaymentStatus {
         PENDING, PAID, FAILED, REFUNDED
     }
 }
