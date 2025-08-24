@@ -51,6 +51,7 @@ export interface CreateOrderRequest {
   shippingPostalCode?: string;
   recipientName: string;
   recipientPhone: string;
+  shippingPhone: string; // Add this
   paymentMethod: PaymentMethod;
   notes?: string;
 }

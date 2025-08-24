@@ -210,9 +210,9 @@ const CartPage: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Mã giảm giá"
-                      className="flex-1 px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      className="flex-1 px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-w-0"
                     />
-                    <Button variant="outline" icon={<Tag className="w-4 h-4" />}>
+                    <Button variant="outline" icon={<Tag className="w-4 h-4" />} className="flex-shrink-0 whitespace-nowrap">
                       Áp dụng
                     </Button>
                   </div>

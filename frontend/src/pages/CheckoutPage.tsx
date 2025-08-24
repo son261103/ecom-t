@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -11,7 +11,9 @@ import {
   CheckCircle,
   
 } from 'lucide-react';
-import { Card, Button, Input } from '../components/ui';
+import { Card, Button, Input, Select } from '../components/ui';
+import { addressService } from '../services/addressService';
+import type { Province, District, Ward } from '../types';
 import { useAuth, useCart } from '../contexts';
 import { orderService } from '../services';
 import type { CreateOrderRequest, PaymentMethod } from '../types';
@@ -32,19 +34,12 @@ const schema = yup.object({
     .string()
     .min(10, 'Địa chỉ phải có ít nhất 10 ký tự')
     .required('Địa chỉ là bắt buộc'),
-  shippingWard: yup
-    .string()
-    .required('Phường/Xã là bắt buộc'),
-  shippingDistrict: yup
-    .string()
-    .required('Quận/Huyện là bắt buộc'),
   shippingCity: yup
     .string()
     .required('Tỉnh/Thành phố là bắt buộc'),
-  shippingPostalCode: yup
+  shippingWard: yup
     .string()
-    .matches(/^\d{5,6}$/, 'Mã bưu điện không hợp lệ')
-    .optional(),
+    .required('Phường/Xã là bắt buộc'),
   paymentMethod: yup
     .string()
     .oneOf(['COD', 'VNPAY', 'SEPAY'], 'Phương thức thanh toán không hợp lệ')
@@ -57,6 +52,9 @@ const CheckoutPage: React.FC = () => {
   const { cart, clearCart } = useCart();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<string>('');
 
   const {
     register,
@@ -71,26 +69,67 @@ const CheckoutPage: React.FC = () => {
     },
   });
 
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      const provinceData = await addressService.getProvinces();
+      setProvinces(provinceData);
+    };
+    fetchProvinces();
+  }, []);
+
+  useEffect(() => {
+    const fetchWards = async () => {
+      if (selectedProvince) {
+        const provinceDetails = await addressService.getProvinceDetails(
+          Number(selectedProvince)
+        );
+        if (provinceDetails && provinceDetails.districts) {
+          const allWards = provinceDetails.districts.flatMap(
+            (district) => district.wards || []
+          );
+          setWards(allWards);
+        } else {
+          setWards([]);
+        }
+      } else {
+        setWards([]);
+      }
+    };
+
+    fetchWards();
+  }, [selectedProvince]);
+
   const paymentMethod = watch('paymentMethod');
 
-  if (!isAuthenticated) {
-    navigate(ROUTES.LOGIN);
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate(ROUTES.LOGIN);
+    } else if (cart && cart.items.length === 0) {
+      navigate(ROUTES.CART);
+    }
+  }, [isAuthenticated, cart, navigate]);
 
-  if (!cart || cart.items.length === 0) {
-    navigate(ROUTES.CART);
-    return null;
+  if (!isAuthenticated || !cart || cart.items.length === 0) {
+    return (
+      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+        <Loading size="lg" text="Đang tải..." />
+      </div>
+    );
   }
 
   const onSubmit = async (data: CreateOrderRequest) => {
     setIsSubmitting(true);
+
+    const orderData = {
+      ...data,
+      // Gửi giá trị mặc định cho quận/huyện theo yêu cầu
+      shippingDistrict: data.shippingWard, // Sử dụng tạm tên phường/xã làm quận/huyện
+      shippingPhone: data.recipientPhone,
+    };
+
     try {
-      const order = await orderService.createOrder(data);
-      
-      // Clear cart after successful order
+      const order = await orderService.createOrder(orderData);
       await clearCart();
-      
       toast.success('Đặt hàng thành công!');
       navigate(`${ROUTES.ORDERS}/${order.id}`);
     } catch (error: any) {
@@ -145,7 +184,7 @@ const CheckoutPage: React.FC = () => {
                     <User className="w-5 h-5 mr-2" />
                     Thông tin liên hệ
                   </h2>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input
                       {...register('recipientName')}
@@ -172,7 +211,7 @@ const CheckoutPage: React.FC = () => {
                     <MapPin className="w-5 h-5 mr-2" />
                     Địa chỉ giao hàng
                   </h2>
-                  
+
                   <div className="space-y-4">
                     <Input
                       {...register('shippingAddress')}
@@ -181,38 +220,37 @@ const CheckoutPage: React.FC = () => {
                       error={errors.shippingAddress?.message}
                       fullWidth
                     />
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Input
-                        {...register('shippingWard')}
-                        label="Phường/Xã"
-                        placeholder="Chọn phường/xã"
-                        error={errors.shippingWard?.message}
-                        fullWidth
-                      />
-                      <Input
-                        {...register('shippingDistrict')}
-                        label="Quận/Huyện"
-                        placeholder="Chọn quận/huyện"
-                        error={errors.shippingDistrict?.message}
-                        fullWidth
-                      />
-                      <Input
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Select
                         {...register('shippingCity')}
                         label="Tỉnh/Thành phố"
-                        placeholder="Chọn tỉnh/thành phố"
                         error={errors.shippingCity?.message}
+                        onChange={(e) => setSelectedProvince(e.target.value)}
                         fullWidth
-                      />
+                      >
+                        <option value="">Chọn tỉnh/thành phố</option>
+                        {provinces.map((p) => (
+                          <option key={p.code} value={p.code}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </Select>
+                      <Select
+                        {...register('shippingWard')}
+                        label="Phường/Xã"
+                        error={errors.shippingWard?.message}
+                        disabled={!selectedProvince}
+                        fullWidth
+                      >
+                        <option value="">Chọn phường/xã</option>
+                        {wards.map((w) => (
+                          <option key={w.code} value={w.code}>
+                            {w.name}
+                          </option>
+                        ))}
+                      </Select>
                     </div>
-                    
-                    <Input
-                      {...register('shippingPostalCode')}
-                      label="Mã bưu điện (tùy chọn)"
-                      placeholder="Nhập mã bưu điện"
-                      error={errors.shippingPostalCode?.message}
-                      fullWidth
-                    />
                   </div>
                 </div>
               </Card>
@@ -224,7 +262,7 @@ const CheckoutPage: React.FC = () => {
                     <CreditCard className="w-5 h-5 mr-2" />
                     Phương thức thanh toán
                   </h2>
-                  
+
                   <div className="space-y-3">
                     {paymentMethods.map((method) => (
                       <label
