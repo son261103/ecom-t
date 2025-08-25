@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import Chat from '../components/ui/Chat';
 
 const MainLayout: React.FC = () => {
   return (
@@ -17,7 +18,10 @@ const MainLayout: React.FC = () => {
       <div className="border-t border-secondary-200 bg-gradient-to-r from-primary-100 via-secondary-100 to-primary-100"></div>
 
       <Footer />
-      
+
+      {/* Chat Component */}
+      <Chat />
+
       {/* Toast Notifications */}
       <Toaster
         position="top-right"

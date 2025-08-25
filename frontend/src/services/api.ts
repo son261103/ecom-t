@@ -38,7 +38,8 @@ class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
-        return response;
+        // Return the data property directly to simplify handling in services
+        return response.data;
       },
       (error) => {
         if (error.response) {
@@ -91,29 +92,24 @@ class ApiClient {
   }
 
   // Generic HTTP methods
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.get<T>(url, config);
-    return response.data;
+  get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    return this.client.get<T>(url, config);
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
-    return response.data;
+  post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    return this.client.post<T>(url, data, config);
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
-    return response.data;
+  put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    return this.client.put<T>(url, data, config);
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.patch<T>(url, data, config);
-    return response.data;
+  patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+    return this.client.patch<T>(url, data, config);
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
-    return response.data;
+  delete<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    return this.client.delete<T>(url, config);
   }
 
   // File upload method

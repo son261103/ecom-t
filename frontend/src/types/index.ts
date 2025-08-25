@@ -4,3 +4,4 @@ export * from './product';
 export * from './cart';
 export * from './order';
 export * from './common';
+export type { ChatMessage, ProductInfo, CategoryInfo, BrandInfo, ChatRequest, ChatResponse } from './chat';

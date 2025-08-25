@@ -21,6 +21,7 @@ import {
   AboutPage,
   CartPage,
   CheckoutPage,
+  ChatPage,
   ProfilePage,
   OrdersPage,
   OrderDetailPage,
@@ -71,6 +72,7 @@ function App() {
               <Route path={ROUTES.NEWS} element={<NewsPage />} />
               <Route path={`${ROUTES.NEWS}/:id`} element={<NewsDetailPage />} />
               <Route path={ROUTES.ABOUT} element={<AboutPage />} />
+              <Route path="/chat" element={<ChatPage />} />
 
               {/* Protected User Routes */}
               <Route path={ROUTES.CART} element={

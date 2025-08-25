@@ -7,6 +7,7 @@ export { brandService } from './brandService';
 export { cartService } from './cartService';
 export { orderService } from './orderService';
 export { uploadService } from './uploadService';
+export { chatService } from './chatService';
 
 // Export service classes for advanced usage
 export { AuthService } from './authService';

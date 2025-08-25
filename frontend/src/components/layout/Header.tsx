@@ -46,6 +46,7 @@ const Header: React.FC = () => {
     { name: 'Sản phẩm', href: ROUTES.PRODUCTS },
     { name: 'Tin tức', href: ROUTES.NEWS },
     { name: 'Giới thiệu', href: ROUTES.ABOUT },
+    { name: 'Trợ lý AI', href: '/chat' },
   ];
 
   return (

@@ -9,6 +9,7 @@ export { default as NewsDetailPage } from './NewsDetailPage';
 export { default as AboutPage } from './AboutPage';
 export { default as CartPage } from './CartPage';
 export { default as CheckoutPage } from './CheckoutPage';
+export { default as ChatPage } from './ChatPage';
 
 // User pages
 export { default as ProfilePage } from './user/ProfilePage';
