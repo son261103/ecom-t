@@ -170,7 +170,7 @@ export class ProductService {
 
   // Search functionality
   async searchProducts(query: string): Promise<ProductResponse[]> {
-    return apiClient.get<ProductResponse[]>(`/products/search?q=${encodeURIComponent(query)}`);
+    return apiClient.get<ProductResponse[]>(`/products/search?name=${encodeURIComponent(query)}`);
   }
 
   // Featured products (you might want to add this endpoint to backend)
