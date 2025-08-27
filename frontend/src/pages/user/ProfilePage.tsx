@@ -14,7 +14,7 @@ import {
   Lock,
   Eye,
   EyeOff,
-
+  Mail,
 } from 'lucide-react';
 import { Card, Button, Input, Loading } from '../../components/ui';
 import { useAuth } from '../../contexts';
